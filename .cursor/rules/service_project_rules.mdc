@@ -1,0 +1,82 @@
+---
+alwaysApply: false
+---
+
+## 技术栈
+
+- Spring Boot 3 (基于 Java 17+)
+- 使用 Lombok 简化代码（如 @Data, @AllArgsConstructor 等）
+- 全局异常处理机制：throw new CustomException("错误信息");
+- 所有第三方库已正确引入，但需显式 import Java 标准库类（如 LocalDate, Objects 等）
+- 数据库 ORM 框架 Mybatis-plus
+
+## 项目结构
+
+- controller: 处理 HTTP 请求，调用 Service 层
+- dto: 定义前后端传输对象（Data Transfer Object）
+- entity: JPA 实体类，对应数据库表
+- service: 接口定义在接口类中，实现类放在 impl 包下（可选）
+- enmus:枚举定义
+
+## 编码规范
+
+- 所有需要抛出异常的方法必须添加 @SneakyThrows 注解（来自 Lombok），避免显式 throws。
+- 新增 Service 方法时，先定义接口，再写实现类（若已有接口则仅补充实现）。
+
+- 方法命名采用驼峰命名法，遵循语义清晰原则。
+
+- 经常会使用一些逻辑判断需要用到枚举 理解 import com.example.web.enums.\*;后在处理
+- 经常会使用一些字符串判断、实体类转换成模型类 理解 import com.example.web.tools.Extension;
+- 在 Service 中已经完成了基本的接口(List、Get、CreateOrEdit、Delete、BatchDelete)等
+- 在进行赋值的时候,如果是牵涉到一些类型或则状态是枚举的 使用方式如下
+
+```
+  entity.setAdoptionApplicationStatus(AdoptionApplicationStatusEnum.已取消.index());
+```
+
+- 在接口返回的时候,可以直接返回原对象,全局返回的时候有做一层包装,比如下面的案例就是直接返回了 AppUserDto
+  public AppUserDto CreateOrEdit(@RequestBody AppUserDto input) {
+  return AppUserService.CreateOrEdit(input);
+
+  }
+
+## Controller 控制器规范
+
+- 请求匹配请使用@RequestMapping 注解
+- 在注入 Service 的时候请使用 @Autowired()
+- 对方法上需要有 @SneakyThrows 注解
+- 方法的请求要求是 Post 方式，并且使用 @RequestMapping
+- 如果是分页返回结构则需要包一层 PagedResult<类>
+- 使用 DTO 进行前后端数据交互，禁止直接返回 Entity。
+- 标准案例参考如下控制器下的 src/main/java/com/example/web/controller/AppUserController.java
+- 定义的方法和控制器都要求使用大写的驼峰命名
+- 如果是一些对象返回则直接返回无需包 ResponseData
+- 在返回类型为 String 这种类型的时候请使用 需要包一层 ResponseData<String>,参考案例如下
+
+```
+    @RequestMapping(value = "/方法路由", method = RequestMethod.POST)
+    public ResponseData<String> 方法(@RequestBody 请求参数模型 input) {
+        return ResponseData.GetResponseDataInstance(null, "成功", true);
+    }
+```
+## MyBatisPlus使用规范
+- 查询的时候优先使用 Wrappers.<实体类>lambdaQuery()的方式来智能提示
+- 
+## DTO 传输模型规范
+
+- 所有用于前后端数据传输的类必须以 `Dto` 结尾
+- 禁止使用 `Input`、`Output`、`Request`、`Response` 等后缀
+- 即使是输入参数类也要使用 `Dto` 后缀
+- DTO 要放在 dto 目录下
+- DTO 要使用 @JsonProperty()属性
+- DTO 定义属性或则字段的时候请使用首字母大写的驼峰命令,请勿使用小写
+- DTO 中如果存在时间类型的 请使用 LocalDateTime 并且标记 @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+- 涉及日期时间操作时，使用 java.time 包下的类（如 LocalDateTime），并注意导入。
+- 所有 import 语句必须完整写出，尤其是 Java 自带的工具类（如 java.util.Objects, java.time.LocalDateTime）。
+- 我在添加一些自己的 Dto 类的时候，你要从 import com.example.web.dto 从获取 不要随意获取 包括在智能提示的时候
+- 创建时间是 CreationTime 而不是 CreationTime
+
+## 异常处理
+
+- 业务异常统一通过 throw new CustomException("错误信息") 抛出
+- 不要使用 System.out.println，使用 log.debug/info/error 输出日志
